@@ -246,6 +246,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
           'DebtorTrack',
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
         actions: [

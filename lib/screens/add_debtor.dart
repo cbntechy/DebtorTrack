@@ -102,6 +102,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
         title: Text(_isEditing ? 'Edit debtor' : 'Add debtor', 
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
         backgroundColor: _brandPurple,
