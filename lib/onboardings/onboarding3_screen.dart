@@ -2,13 +2,10 @@ import 'package:debtortrack/screens/debtor_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'onboarding4_screen.dart';
 import 'onboarding_illustration.dart';
+import '../core/theme/app_colors.dart';
 
 class Onboarding3Screen extends StatelessWidget {
   const Onboarding3Screen({super.key});
-
-  static const Color backgroundColor = Color(0xFF2C1950);
-  static const Color cardColor = Color(0xFF463563);
-  static const Color mutedTextColor = Color(0xFFC9C0D8);
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +32,12 @@ class Onboarding3Screen extends StatelessWidget {
                       (route) => false,
                     );
                   },
-                  child: const Text(
+                  child:  Text(
                     'Skip',
-                    style: TextStyle(
-                      color: mutedTextColor,
+                    style: ThemeData.light().textTheme.labelLarge?.copyWith(
+                      color: titleLargeText,
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -50,27 +47,27 @@ class Onboarding3Screen extends StatelessWidget {
 
               const Center(
                 child: OnboardingIllustration(
-                  type: OnboardingIllustrationType.reminder,
+                  type: OnboardingIllustrationType.complete,
                 ),
               ),
 
               const Spacer(),
 
-              const Text(
-                'Keep every debt\nin one place',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                  height: 1.15,
-                ),
+               Text(
+                'One tap when someone pays',
+                style: ThemeData.light().textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
+                    ),
               ),
 
               const SizedBox(height: 18),
 
-              const Text(
-                'Add debtors, amounts, and due dates without relying on memory.',
-                style: TextStyle(
+               Text(
+                'Mark a debt paid the moment cash lands, in person or by transfer. Your list stays accurate.',
+                style: ThemeData.light().textTheme.labelLarge?.copyWith(
                   color: mutedTextColor,
                   fontSize: 18,
                   height: 1.5,
@@ -114,9 +111,13 @@ class Onboarding3Screen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Next',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: ThemeData.light().textTheme.titleLarge?.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: backgroundColor,
+                    ),
                   ),
                 ),
               ),

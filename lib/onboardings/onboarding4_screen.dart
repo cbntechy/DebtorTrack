@@ -1,13 +1,11 @@
 import 'package:debtortrack/screens/debtor_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'onboarding_illustration.dart';
+import '../core/theme/app_colors.dart';
 
 class Onboarding4Screen extends StatelessWidget {
   const Onboarding4Screen({super.key});
 
-  static const Color backgroundColor = Color(0xFF2C1950);
-  static const Color cardColor = Color(0xFF463563);
-  static const Color mutedTextColor = Color(0xFFC9C0D8);
 
   @override
   Widget build(BuildContext context) {
@@ -24,27 +22,27 @@ class Onboarding4Screen extends StatelessWidget {
 
               const Center(
                 child: OnboardingIllustration(
-                  type: OnboardingIllustrationType.complete,
+                  type: OnboardingIllustrationType.calendar,
                 ),
               ),
 
               const Spacer(),
 
-              const Text(
-                'Keep every debt\nin one place',
-                style: TextStyle(
+               Text(
+                'Your\'re all set',
+                style: ThemeData.light().textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontSize: 34,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   height: 1.15,
                 ),
               ),
 
               const SizedBox(height: 18),
 
-              const Text(
-                'Add debtors, amounts, and due dates without relying on memory.',
-                style: TextStyle(
+               Text(
+                'Start adding debtors and let DebtorTrack help you stay on top of every payment.',
+                style: ThemeData.light().textTheme.labelLarge?.copyWith(
                   color: mutedTextColor,
                   fontSize: 18,
                   height: 1.5,
@@ -91,9 +89,13 @@ class Onboarding4Screen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
+                  child:  Text(
                     'Get Started',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: ThemeData.light().textTheme.labelLarge?.copyWith(
+                      color: backgroundColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),

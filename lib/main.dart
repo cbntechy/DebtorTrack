@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'onboardings/onboarding1_screen.dart';
 import 'screens/debtor_list_screen.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,10 +36,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4D2C8D)),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       home: _onboardingComplete == null
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : _onboardingComplete!

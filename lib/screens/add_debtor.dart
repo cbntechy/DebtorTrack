@@ -99,7 +99,11 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFCFAFF),
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit debtor' : 'Add debtor'),
+        title: Text(_isEditing ? 'Edit debtor' : 'Add debtor', 
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: _brandPurple,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -114,7 +118,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
-                decoration: _fieldDecoration(label: 'Name'),
+                decoration: _fieldDecoration(label: 'Name', ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a name';

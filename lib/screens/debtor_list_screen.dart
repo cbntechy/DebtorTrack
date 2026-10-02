@@ -8,6 +8,7 @@ import 'package:debtortrack/models/debtor_model.dart';
 
 import 'dart:convert';
 
+import 'package:debtortrack/core/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DebtorListScreen extends StatefulWidget {
@@ -18,8 +19,6 @@ class DebtorListScreen extends StatefulWidget {
 }
 
 class _DebtorListScreenState extends State<DebtorListScreen> {
-  static const _brandPurple = Color(0xFF2B1950);
-  static const _accentPurple = Color(0xFF4D2C8D);
   final List<DebtorModel> debtors = [];
 
   double get _totalOutstanding => debtors
@@ -66,7 +65,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person, size: 100, color: Colors.grey),
+            Icon(Icons.person, size: 100, color: mutedTextColor),
             SizedBox(height: 16),
             Text('No debtors added yet.'),
             Text('Tap the + button to add a new debtor.'),
@@ -135,11 +134,11 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                     const SnackBar(
                       content: Text('Debtor deleted'),
                       backgroundColor: Color(0xFF4D2C8D),
-                    padding: EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 16,
-                ),
-                behavior: SnackBarBehavior.floating,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 16,
+                      ),
+                      behavior: SnackBarBehavior.floating,
                     ),
                   );
                 } else if (result.debtor != null) {
@@ -158,7 +157,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                   children: [
                     CircleAvatar(
                       radius: 25,
-                      backgroundColor: _accentPurple,
+                      backgroundColor: accentPurple,
                       child: Text(
                         debtor.name[0].toUpperCase(),
                         style: const TextStyle(
@@ -238,14 +237,16 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _brandPurple,
+      backgroundColor: brandPurple,
       appBar: AppBar(
-        backgroundColor: _brandPurple,
+        backgroundColor: brandPurple,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title:  Text(
           'DebtorTrack',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -268,16 +269,19 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                 Text(
                   'Total outstanding',
-                  style: TextStyle(color: Color(0xFFC9BFDB), fontSize: 16),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: mutedTextColor,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 6),
 
                 // Converts the outstanding amount to String
                 Text(
                   '₦${_totalOutstanding.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     color: Colors.white,
                     fontSize: 34,
                     fontWeight: FontWeight.bold,
@@ -310,7 +314,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
             await _saveDebtors();
           }
         },
-        backgroundColor: _accentPurple,
+        backgroundColor: accentPurple,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),

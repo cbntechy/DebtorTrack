@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 
 import 'onboarding2_screen.dart';
 import 'onboarding_illustration.dart';
+import '../core/theme/app_colors.dart';
 
 class Onboarding1Screen extends StatelessWidget {
   const Onboarding1Screen({super.key});
 
-  static const Color backgroundColor = Color(0xFF2C1950);
-  static const Color cardColor = Color(0xFF463563);
-  static const Color mutedTextColor = Color(0xFFC9C0D8);
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,12 +34,12 @@ class Onboarding1Screen extends StatelessWidget {
                       (route) => false,
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'Skip',
-                    style: TextStyle(
-                      color: mutedTextColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                    style: ThemeData.light().textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800
                     ),
                   ),
                 ),
@@ -57,21 +55,21 @@ class Onboarding1Screen extends StatelessWidget {
 
               const Spacer(),
 
-              const Text(
-                'Keep every debt\nin one place',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                  height: 1.15,
+               Text(
+                'Never chase a payment from memeory again',
+                style: ThemeData.light().textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
                 ),
               ),
 
               const SizedBox(height: 18),
 
-              const Text(
-                'Add debtors, amounts, and due dates without relying on memory.',
-                style: TextStyle(
+              Text(
+                'Keep every debtor in one place and know exactly who owes you, and since when.',
+                style: ThemeData.light().textTheme.labelLarge?.copyWith(
                   color: mutedTextColor,
                   fontSize: 18,
                   height: 1.5,
@@ -115,9 +113,13 @@ class Onboarding1Screen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
+                  child:  Text(
                     'Next',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: ThemeData.light().textTheme.titleLarge?.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: backgroundColor,
+                    ),
                   ),
                 ),
               ),

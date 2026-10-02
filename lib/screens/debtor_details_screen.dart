@@ -3,6 +3,8 @@ import 'package:debtortrack/screens/add_debtor.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/theme/app_colors.dart';
+
 // This tells the list screen what happened when the details screen closed.
 enum DebtorDetailsAction { updated, deleted }
 
@@ -21,9 +23,6 @@ class DebtorDetailsScreen extends StatelessWidget {
   final DebtorModel debtor;
 
   const DebtorDetailsScreen({super.key, required this.debtor});
-
-  static const _brandPurple = Color(0xFF2B1950);
-  static const _accentPurple = Color(0xFF4D2C8D);
 
   Future<void> _sendReminder(BuildContext context) async {
     final subject = 'Payment Reminder';
@@ -72,16 +71,43 @@ class DebtorDetailsScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete debtor?'),
-          content: Text('Delete ${debtor.name}. This cannot be undone.'),
+          title: Text(
+            'Delete debtor?',
+            style: ThemeData.light().textTheme.titleLarge?.copyWith(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: Text(
+            'Delete ${debtor.name}. \nThis cannot be undone.',
+            style: ThemeData.light().textTheme.labelMedium?.copyWith(
+              color: Colors.black,
+              fontSize: 16,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: ThemeData.light().textTheme.labelLarge?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: accentPurple,
+                ),
+              ),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Delete'),
+              child: Text(
+                'Delete',
+                style: ThemeData.light().textTheme.labelLarge?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         );
@@ -103,7 +129,7 @@ class DebtorDetailsScreen extends StatelessWidget {
       'Overdue' => const Color(0xFFC62828),
       'Due Today' => const Color(0xFFEF6C00),
       'Paid' => const Color(0xFF2E7D32),
-      _ => _accentPurple,
+      _ => accentPurple,
     };
     final statusBackground = switch (status) {
       'Overdue' => const Color(0xFFFDE8E7),
@@ -113,7 +139,7 @@ class DebtorDetailsScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      backgroundColor: _brandPurple,
+      backgroundColor: brandPurple,
       body: SafeArea(
         child: Column(
           children: [
@@ -154,7 +180,7 @@ class DebtorDetailsScreen extends StatelessWidget {
                       backgroundColor: Color(0xFF594575),
                       child: Text(
                         initial,
-                        style: const TextStyle(
+                        style: ThemeData.light().textTheme.titleLarge?.copyWith(
                           color: Colors.white,
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
@@ -164,7 +190,7 @@ class DebtorDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     Text(
                       debtor.name,
-                      style: const TextStyle(
+                      style: ThemeData.light().textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -173,8 +199,8 @@ class DebtorDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       debtor.email,
-                      style: const TextStyle(
-                        color: Color(0xFFC9BFDB),
+                      style: ThemeData.light().textTheme.labelMedium?.copyWith(
+                        color: mutedTextColor,
                         fontSize: 16,
                       ),
                     ),
@@ -206,11 +232,12 @@ class DebtorDetailsScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Amount owed',
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: ThemeData.light().textTheme.labelLarge
+                                  ?.copyWith(
+                                    color: statusColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                             SizedBox(height: 12),
 
@@ -243,11 +270,20 @@ class DebtorDetailsScreen extends StatelessWidget {
                                   ? null
                                   : () {
                                       debtor.isPaid = true;
-                                      Navigator.pop(context, DebtorDetailsResult.updated(debtor));
+                                      Navigator.pop(
+                                        context,
+                                        DebtorDetailsResult.updated(debtor),
+                                      );
                                     },
                               icon: const Icon(Icons.check),
                               label: Text(
                                 debtor.isPaid ? 'Paid' : 'Mark as paid',
+                                style: ThemeData.light().textTheme.labelLarge
+                                    ?.copyWith(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
                               ),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFF20A66D),
@@ -269,11 +305,19 @@ class DebtorDetailsScreen extends StatelessWidget {
                                   ? null
                                   : () => _sendReminder(context),
                               icon: const Icon(Icons.email_outlined),
-                              label: const Text('Send reminder'),
+                              label: Text(
+                                'Send reminder',
+                                style: ThemeData.light().textTheme.labelLarge
+                                    ?.copyWith(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color:accentPurple,
+                                    ),
+                              ),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: _accentPurple,
+                                foregroundColor: accentPurple,
                                 side: const BorderSide(
-                                  color: _accentPurple,
+                                  color: accentPurple,
                                   width: 1.5,
                                 ),
                                 padding: const EdgeInsets.symmetric(
@@ -289,12 +333,12 @@ class DebtorDetailsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 36),
-                      const Text(
+                       Text(
                         'DETAILS',
-                        style: TextStyle(
-                          color: Color(0xFF716580),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: mutedTextColor,
                           fontSize: 15,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w200,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -302,12 +346,15 @@ class DebtorDetailsScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(
                           Icons.calendar_today_outlined,
-                          color: _accentPurple,
+                          color: accentPurple,
                         ),
                         title: const Text('Due date'),
                         trailing: Text(
                           dueDate,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w100,
+                            color: mutedTextColor,
+                          ),
                         ),
                       ),
                     ],

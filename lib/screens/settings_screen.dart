@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:debtortrack/constants.dart';
+import 'package:debtortrack/core/theme/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -50,9 +50,13 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: brandPurple,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title:  Text(
           'Settings',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: ThemeData.light().textTheme.titleLarge?.copyWith(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         actions: [],
       ),
@@ -60,19 +64,34 @@ class SettingsScreen extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         children: [
           ListTile(
-            title: Text("Privacy Policy"),
+            title: Text("Privacy Policy", style: ThemeData.light().textTheme.titleMedium?.copyWith(
+              color: accentPurple,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),),
             minVerticalPadding: 18,
             onTap: () => _privacyPolicy(context),
           ),
-          Divider(),
+
+          Divider(thickness: 1, color: Color(0xFF4D2C8D),),
+
           ListTile(
-            title: Text("Send Feedback"),
-            subtitle: Text('Tell us what you think should be improved'),
+            title: Text("Send Feedback", style: ThemeData.light().textTheme.titleMedium?.copyWith(
+              color: accentPurple,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),),
+            subtitle: Text('Tell us what you think should be improved', style: ThemeData.light().textTheme.labelMedium?.copyWith(
+              color: Color(0xFF827292),
+              fontSize: 14,
+            ),),
             minVerticalPadding: 18,
             onTap: () {
               _sendFeedback(context);
             },
           ),
+
+          Divider(thickness: 1, color: Color(0xFF4D2C8D),),
         ],
       ),
     );
