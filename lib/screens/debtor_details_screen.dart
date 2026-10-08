@@ -1,8 +1,8 @@
+import 'package:debtortrack/core/utilities/format_moni_currency.dart';
 import 'package:debtortrack/models/debtor_model.dart';
 import 'package:debtortrack/screens/add_debtor.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../core/theme/app_colors.dart';
 
 // This tells the list screen what happened when the details screen closed.
@@ -21,15 +21,21 @@ class DebtorDetailsResult {
 
 class DebtorDetailsScreen extends StatelessWidget {
   final DebtorModel debtor;
+  final String currencyCode;
 
-  const DebtorDetailsScreen({super.key, required this.debtor});
+  const DebtorDetailsScreen({super.key, required this.debtor, required this.currencyCode});
 
   Future<void> _sendReminder(BuildContext context) async {
+final formattedAmount = formatMoniCurrency(
+  debtor.amount,
+  currencyCode: currencyCode,
+);
+
     final subject = 'Payment Reminder';
     final body =
         'Hello ${debtor.name},\n\n'
         'This is a gentle reminder that your outstanding balance of '
-        '₦${debtor.amount.toStringAsFixed(2)} is due on '
+        '$formattedAmount is due on '
         '${debtor.dueDate.toLocal().toIso8601String().split('T').first}.\n\n'
         'Thank you.';
 
@@ -242,7 +248,7 @@ class DebtorDetailsScreen extends StatelessWidget {
                             SizedBox(height: 12),
 
                             Text(
-                              '\$${debtor.amount.toStringAsFixed(2)}',
+                              formatMoniCurrency(debtor.amount, currencyCode: currencyCode),
                               style: const TextStyle(
                                 color: Color(0xFF24202A),
                                 fontSize: 38,
@@ -311,7 +317,7 @@ class DebtorDetailsScreen extends StatelessWidget {
                                     ?.copyWith(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w800,
-                                      color:accentPurple,
+                                      color: accentPurple,
                                     ),
                               ),
                               style: OutlinedButton.styleFrom(
@@ -333,12 +339,12 @@ class DebtorDetailsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 36),
-                       Text(
+                      Text(
                         'DETAILS',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: mutedTextColor,
+                          color: accentPurple,
                           fontSize: 15,
-                          fontWeight: FontWeight.w200,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -351,10 +357,11 @@ class DebtorDetailsScreen extends StatelessWidget {
                         title: const Text('Due date'),
                         trailing: Text(
                           dueDate,
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w100,
-                            color: mutedTextColor,
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w100,
+                                color: Colors.black,
+                              ),
                         ),
                       ),
                     ],

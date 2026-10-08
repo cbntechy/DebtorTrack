@@ -100,7 +100,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
       backgroundColor: const Color(0xFFFCFAFF),
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit debtor' : 'Add debtor', 
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),

@@ -1,3 +1,4 @@
+import 'package:debtortrack/core/utilities/saved_currency_code.dart';
 import 'package:flutter/material.dart';
 
 import 'add_debtor.dart';
@@ -8,8 +9,10 @@ import 'package:debtortrack/models/debtor_model.dart';
 
 import 'dart:convert';
 
+import 'package:debtortrack/core/utilities/format_moni_currency.dart';
 import 'package:debtortrack/core/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 
 class DebtorListScreen extends StatefulWidget {
   const DebtorListScreen({super.key});
@@ -25,11 +28,30 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
       .where((debtor) => !debtor.isPaid)
       .fold(0, (total, debtor) => total + debtor.amount);
 
+String get _formattedTotalOutstanding =>
+      formatMoniCurrency(_totalOutstanding, currencyCode: selectedCode, );
+
+double _rawAmount(DebtorModel debtor) => debtor.amount;
+
+String _formattedDebtorAmount(DebtorModel debtor) =>
+      formatMoniCurrency(_rawAmount(debtor), currencyCode: selectedCode, );
+
+String selectedCode = 'USD'; // Default currency code
+
   @override
   void initState() {
     super.initState();
     _loadDebtors();
+    _loadTargetCurrency();
+    
   }
+
+  Future<void> _loadTargetCurrency() async {
+  final code = await getEffectiveCurrencyCode();
+
+  if (!mounted) return;
+  setState(() => selectedCode = code );
+}
 
   // Convert every debtor to debtors using toMap()
   Future<void> _loadDebtors() async {
@@ -118,7 +140,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                 final result = await Navigator.push<DebtorDetailsResult>(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DebtorDetailsScreen(debtor: debtor),
+                    builder: (context) => DebtorDetailsScreen(debtor: debtor, currencyCode: selectedCode),
                   ),
                 );
 
@@ -194,7 +216,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '\$${debtor.amount.toStringAsFixed(2)}',
+                          _formattedDebtorAmount(debtor),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -242,22 +264,22 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
         backgroundColor: brandPurple,
         foregroundColor: Colors.white,
         elevation: 0,
-        title:  Text(
+        title: Text(
           'DebtorTrack',
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             color: const Color(0xFFFCFAFF),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async{
+            await  Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const SettingsScreen()),
+
               );
+              await _loadTargetCurrency(); // Reload the target currency after returning from settings
             },
           ),
         ],
@@ -270,18 +292,16 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                 Text(
+                Text(
                   'Total outstanding',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: mutedTextColor,
-                    fontSize: 16,
-                  ),
+                  style: Theme.of(context).textTheme.labelLarge
+                      ?.copyWith(color: mutedTextColor, fontSize: 16),
                 ),
                 const SizedBox(height: 6),
 
                 // Converts the outstanding amount to String
                 Text(
-                  '₦${_totalOutstanding.toStringAsFixed(2)}',
+                  _formattedTotalOutstanding,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     color: Colors.white,
                     fontSize: 34,
