@@ -5,10 +5,11 @@ import 'onboardings/onboarding1_screen.dart';
 import 'screens/debtor_list_screen.dart';
 import 'core/theme/app_theme.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize currency preferences before running the app
-  await initializeCurrencyPreferences(); 
+  await initializeCurrencyPreferences();
+  
   runApp(const MyApp());
 }
 

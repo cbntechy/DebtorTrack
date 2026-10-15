@@ -30,7 +30,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+             <meta-data android:name="com.posthog.posthog.PROJECT_TOKEN" android:value="phc_thE4vdUEw6vdsrHKnwvbQK9qz369nZB7kC67ZNpKeLLu" />
+  <meta-data android:name="com.posthog.posthog.POSTHOG_HOST" android:value="https://eu.i.posthog.com" />
+  <meta-data android:name="com.posthog.posthog.TRACK_APPLICATION_LIFECYCLE_EVENTS" android:value="true" />
+  <meta-data android:name="com.posthog.posthog.DEBUG" android:value="false" />
     </application>
+
+
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.

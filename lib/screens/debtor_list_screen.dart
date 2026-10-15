@@ -1,5 +1,6 @@
 import 'package:debtortrack/core/utilities/saved_currency_code.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'add_debtor.dart';
 import 'debtor_details_screen.dart';
@@ -12,7 +13,6 @@ import 'dart:convert';
 import 'package:debtortrack/core/utilities/format_moni_currency.dart';
 import 'package:debtortrack/core/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 class DebtorListScreen extends StatefulWidget {
   const DebtorListScreen({super.key});
@@ -28,30 +28,46 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
       .where((debtor) => !debtor.isPaid)
       .fold(0, (total, debtor) => total + debtor.amount);
 
-String get _formattedTotalOutstanding =>
-      formatMoniCurrency(_totalOutstanding, currencyCode: selectedCode, );
+  String _searchQuery = '';
 
-double _rawAmount(DebtorModel debtor) => debtor.amount;
+ 
 
-String _formattedDebtorAmount(DebtorModel debtor) =>
-      formatMoniCurrency(_rawAmount(debtor), currencyCode: selectedCode, );
 
-String selectedCode = 'USD'; // Default currency code
+  List<DebtorModel> get _filteredDebtors {
+    final query = _searchQuery.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return debtors;
+    }
+
+    return debtors.where((debtor) {
+      return debtor.name.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  String get _formattedTotalOutstanding =>
+      formatMoniCurrency(_totalOutstanding, currencyCode: selectedCode);
+
+  double _rawAmount(DebtorModel debtor) => debtor.amount;
+
+  String _formattedDebtorAmount(DebtorModel debtor) =>
+      formatMoniCurrency(_rawAmount(debtor), currencyCode: selectedCode);
+
+  String selectedCode = 'USD'; // Default currency code
 
   @override
   void initState() {
     super.initState();
     _loadDebtors();
     _loadTargetCurrency();
-    
   }
 
   Future<void> _loadTargetCurrency() async {
-  final code = await getEffectiveCurrencyCode();
+    final code = await getEffectiveCurrencyCode();
 
-  if (!mounted) return;
-  setState(() => selectedCode = code );
-}
+    if (!mounted) return;
+    setState(() => selectedCode = code);
+  }
 
   // Convert every debtor to debtors using toMap()
   Future<void> _loadDebtors() async {
@@ -97,9 +113,9 @@ String selectedCode = 'USD'; // Default currency code
     } else {
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
-        itemCount: debtors.length,
+        itemCount: _filteredDebtors.length,
         itemBuilder: (context, index) {
-          final debtor = debtors[index];
+          final debtor = _filteredDebtors[index];
           final status = debtor.getStatus();
           final statusColors = switch (status) {
             'Overdue' => (
@@ -140,7 +156,10 @@ String selectedCode = 'USD'; // Default currency code
                 final result = await Navigator.push<DebtorDetailsResult>(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DebtorDetailsScreen(debtor: debtor, currencyCode: selectedCode),
+                    builder: (context) => DebtorDetailsScreen(
+                      debtor: debtor,
+                      currencyCode: selectedCode,
+                    ),
                   ),
                 );
 
@@ -149,7 +168,10 @@ String selectedCode = 'USD'; // Default currency code
                 }
 
                 if (result.action == DebtorDetailsAction.deleted) {
-                  setState(() => debtors.removeAt(index));
+                  // `index` belongs to the filtered list. Find the debtor's
+                  // actual position in the full list before removing it.
+                  final originalIndex = debtors.indexOf(debtor);
+                  setState(() => debtors.removeAt(originalIndex));
                   await _saveDebtors();
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -164,11 +186,14 @@ String selectedCode = 'USD'; // Default currency code
                     ),
                   );
                 } else if (result.debtor != null) {
-                  // Editing replaces the old item at the same list position.
-                  setState(() => debtors[index] = result.debtor!);
+                  // `index` belongs to the filtered list, so use the original
+                  // list position when replacing an edited debtor.
+                  final originalIndex = debtors.indexOf(debtor);
+                  setState(() => debtors[originalIndex] = result.debtor!);
                   await _saveDebtors();
                 }
               },
+
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -273,11 +298,10 @@ String selectedCode = 'USD'; // Default currency code
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             color: const Color(0xFFFCFAFF),
-            onPressed: () async{
-            await  Navigator.push(
+            onPressed: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const SettingsScreen()),
-
               );
               await _loadTargetCurrency(); // Reload the target currency after returning from settings
             },
@@ -306,6 +330,42 @@ String selectedCode = 'USD'; // Default currency code
                     color: Colors.white,
                     fontSize: 34,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    shape: BoxShape.rectangle,
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                  child: TextField(
+                    style: TextStyle(color: Colors.black),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    onSubmitted: (_) {
+                       FocusScope.of(context).unfocus();
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search debtors',
+                      prefixIcon: Image.asset(
+                        'assets/icons/icons8-search-user-100.png',
+                        height: 30,
+                      ),
+
+                      fillColor: Colors.white,
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white),
+                      ),
+                    ),
                   ),
                 ),
               ],
