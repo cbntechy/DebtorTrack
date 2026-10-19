@@ -56,7 +56,7 @@ class Onboarding1Screen extends StatelessWidget {
               const Spacer(),
 
                Text(
-                'Never chase a payment from memeory again',
+                'Never chase a payment from memory again',
                 style: ThemeData.light().textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontSize: 34,

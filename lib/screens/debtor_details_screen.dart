@@ -352,11 +352,47 @@ class DebtorDetailsScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: accentPurple,
                           fontSize: 15,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ListTile(
+                     
+
+
+const SizedBox(height: 12),
+
+if (debtor.purchaseHistory.isEmpty)
+  const Text(
+    'No purchases recorded yet.',
+    style: TextStyle(color: Color(0xFF716580)),
+  )
+else
+  ...debtor.purchaseHistory.map((entry) {
+    final purchaseDate = entry.purchaseDate
+        .toLocal()
+        .toIso8601String()
+        .split('T')
+        .first;
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(
+        Icons.receipt_long_outlined,
+        color: accentPurple,
+      ),
+      title: Text(entry.description),
+      trailing: Text(
+        purchaseDate,
+        style:  Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w100,
+                                color: Colors.black,
+                              ),
+      ),
+    );
+  }),
+
+   ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(
                           Icons.calendar_today_outlined,

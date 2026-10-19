@@ -57,7 +57,7 @@ class Onboarding2Screen extends StatelessWidget {
               const Spacer(),
 
                Text(
-                'Reminders go out automatically',
+                'Easily send reminders',
                 style: ThemeData.light().textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontSize: 34,
