@@ -1,8 +1,11 @@
 import 'package:debtortrack/screens/debtor_list_screen.dart';
 import 'package:flutter/material.dart';
+
 import 'onboarding4_screen.dart';
 import 'onboarding_illustration.dart';
 import '../core/theme/app_colors.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Onboarding3Screen extends StatelessWidget {
   const Onboarding3Screen({super.key});
@@ -20,7 +23,9 @@ class Onboarding3Screen extends StatelessWidget {
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('onboardingComplete', true);
                     // Later: go straight to the debtor list screen.
                     Navigator.pushAndRemoveUntil(
                       context,
@@ -32,7 +37,7 @@ class Onboarding3Screen extends StatelessWidget {
                       (route) => false,
                     );
                   },
-                  child:  Text(
+                  child: Text(
                     'Skip',
                     style: ThemeData.light().textTheme.labelLarge?.copyWith(
                       color: titleLargeText,
@@ -53,19 +58,19 @@ class Onboarding3Screen extends StatelessWidget {
 
               const Spacer(),
 
-               Text(
+              Text(
                 'One tap when someone pays',
                 style: ThemeData.light().textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
-                    ),
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
               ),
 
               const SizedBox(height: 18),
 
-               Text(
+              Text(
                 'Mark a debt paid the moment cash lands, in person or by transfer. Your list stays accurate.',
                 style: ThemeData.light().textTheme.labelLarge?.copyWith(
                   color: mutedTextColor,

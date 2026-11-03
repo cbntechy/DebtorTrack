@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:debtortrack/core/theme/app_colors.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:currency_picker/currency_picker.dart';
+import 'package:debtortrack/core/services/notification_service.dart';
 
 import '../core/utilities/share_app.dart';
 import '../core/utilities/rate_app.dart';
@@ -16,6 +16,16 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  // Function to enable notification
+  Future<void> _notification(BuildContext context) async {
+    final permissionGranted = await NotificationService.instance
+        .requestPermission();
+
+    if (permissionGranted) {
+      await NotificationService.instance.showTestNotification();
+    }
+  }
+
   // Function to open the privacy policy link in the browser
   Future<void> _privacyPolicy(BuildContext context) async {
     final httpUri = Uri.parse('https://cbntechy.github.io/DebtorTrack_privacy');
@@ -116,6 +126,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               title: Text(
+                'Notification',
+                style: ThemeData.light().textTheme.titleMedium?.copyWith(
+                  color: accentPurple,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              subtitle: Text(
+                'Enable notification',
+                style: ThemeData.light().textTheme.labelMedium?.copyWith(
+                  color: mutedTextColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              minVerticalPadding: 18,
+
+              onTap: () => _notification(context),
+              leading: Card(
+                elevation: 0,
+                margin: EdgeInsets.all(8),
+                child: Image.asset(
+                  'assets/icons/icons8-notification-48.png',
+                  height: 150,
+                ),
+              ),
+            ),
+
+            ListTile(
+              title: Text(
                 'Currency',
                 style: ThemeData.light().textTheme.titleMedium?.copyWith(
                   color: accentPurple,
@@ -137,7 +177,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: Card(
                 elevation: 0,
                 margin: EdgeInsets.all(8),
-                child: Image.asset('assets/icons/icons8-stack-of-coins-100.png', height:150 )
+                child: Image.asset(
+                  'assets/icons/icons8-stack-of-coins-100.png',
+                  height: 150,
+                ),
               ),
             ),
 
@@ -163,10 +206,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               minVerticalPadding: 18,
               onTap: () => _privacyPolicy(context),
-               leading: Card(
+              leading: Card(
                 elevation: 0,
                 margin: EdgeInsets.all(8),
-                child: Image.asset('assets/icons/icons8-privacy-policy-100.png', height:150 )
+                child: Image.asset(
+                  'assets/icons/icons8-privacy-policy-100.png',
+                  height: 150,
+                ),
               ),
             ),
             Divider(thickness: 1, color: Color.fromARGB(255, 95, 67, 153)),
@@ -192,10 +238,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () {
                 _sendFeedback(context);
               },
-               leading: Card(
+              leading: Card(
                 elevation: 0,
                 margin: EdgeInsets.all(8),
-                child: Image.asset('assets/icons/icons8-support-chat-bubble-with-question-mark-and-answer-reply-arrow-100.png', height:150 )
+                child: Image.asset(
+                  'assets/icons/icons8-support-chat-bubble-with-question-mark-and-answer-reply-arrow-100.png',
+                  height: 150,
+                ),
               ),
             ),
             Divider(thickness: 1, color: Color.fromARGB(255, 95, 67, 153)),
@@ -223,10 +272,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Implement app sharing functionality here
                 shareApp(context);
               },
-               leading: Card(
+              leading: Card(
                 elevation: 0,
                 margin: EdgeInsets.all(8),
-                child: Image.asset('assets/icons/icons8-download-100.png', height:150 )
+                child: Image.asset(
+                  'assets/icons/icons8-download-100.png',
+                  height: 150,
+                ),
               ),
             ),
             Divider(thickness: 1, color: Color.fromARGB(255, 95, 67, 153)),
@@ -252,10 +304,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () {
                 rateApp(context);
               },
-               leading: Card(
+              leading: Card(
                 elevation: 0,
                 margin: EdgeInsets.all(8),
-                child: Image.asset('assets/icons/icons8-rate-100.png', height:150 ,),
+                child: Image.asset(
+                  'assets/icons/icons8-rate-100.png',
+                  height: 150,
+                ),
               ),
             ),
 

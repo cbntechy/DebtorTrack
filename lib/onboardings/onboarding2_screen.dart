@@ -1,12 +1,14 @@
 import 'package:debtortrack/screens/debtor_list_screen.dart';
 import 'package:flutter/material.dart';
+
 import 'onboarding3_screen.dart';
 import 'onboarding_illustration.dart';
 import '../core/theme/app_colors.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class Onboarding2Screen extends StatelessWidget {
   const Onboarding2Screen({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +20,14 @@ class Onboarding2Screen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               // The Align Widget was used to fit in the SKIP Button in its state.
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('onboardingComplete', true);
+                    if (!context.mounted) return;
                     // Later: go straight to the debtor list screen.
                     Navigator.pushAndRemoveUntil(
                       context,
@@ -35,7 +39,7 @@ class Onboarding2Screen extends StatelessWidget {
                       (route) => false,
                     );
                   },
-                  child:  Text(
+                  child: Text(
                     'Skip',
                     style: ThemeData.light().textTheme.labelLarge?.copyWith(
                       color: titleLargeText,
@@ -56,19 +60,19 @@ class Onboarding2Screen extends StatelessWidget {
 
               const Spacer(),
 
-               Text(
+              Text(
                 'Easily send reminders',
                 style: ThemeData.light().textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
                 ),
               ),
 
               const SizedBox(height: 18),
 
-               Text(
+              Text(
                 'Set it once - DebtorTrack sends a gentle nudge before the due date and follows up if it\'s missed.',
                 style: ThemeData.light().textTheme.labelLarge?.copyWith(
                   color: mutedTextColor,
@@ -114,7 +118,7 @@ class Onboarding2Screen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child:  Text(
+                  child: Text(
                     'Next',
                     style: ThemeData.light().textTheme.titleLarge?.copyWith(
                       fontSize: 20,

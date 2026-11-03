@@ -1,20 +1,35 @@
 import 'package:debtortrack/models/purchase_entry.dart';
+
+enum ReminderChannel { email, whatsapp }
+
 class DebtorModel {
   final String name;
   final double amount;
   final String email;
+  final String phoneNumber;
+  final ReminderChannel preferredChannel;
+  final int notificationId;
   final DateTime dueDate;
- bool isPaid;
- final List<PurchaseEntry> purchaseHistory;
+  final String note;
+  bool isPaid;
+  final List<PurchaseEntry> purchaseHistory;
 
-DebtorModel({
-  required this.name,
-  required this.amount,
-  required this.email,
-  required this.dueDate,
-  required this.isPaid,
-  List<PurchaseEntry>? purchaseHistory,
-}) : purchaseHistory = purchaseHistory ?? [];
+  DebtorModel({
+    required this.name,
+    required this.amount,
+    required this.email,
+    this.phoneNumber = '',
+    this.preferredChannel = ReminderChannel.email,
+    int? notificationId,
+    required this.dueDate,
+    String? note,
+    required this.isPaid,
+    List<PurchaseEntry>? purchaseHistory,
+  }) : notificationId =
+           notificationId ??
+               DateTime.now().microsecondsSinceEpoch.remainder(2147483647),
+       note = note ?? '',
+       purchaseHistory = purchaseHistory ?? [];
 
   String getStatus() {
     final now = DateTime.now();
@@ -38,11 +53,13 @@ DebtorModel({
       'name': name,
       'amount': amount,
       'email': email,
+      'phoneNumber': phoneNumber,
+      'preferredChannel': preferredChannel.name,
+      'notificationId': notificationId,
       'dueDate': dueDate.toIso8601String(),
+      'note': note,
       'isPaid': isPaid,
-      'purchaseHistory': purchaseHistory
-    .map((entry) => entry.toMap())
-    .toList(),
+      'purchaseHistory': purchaseHistory.map((entry) => entry.toMap()).toList(),
     };
   }
 
@@ -50,16 +67,22 @@ DebtorModel({
     return DebtorModel(
       name: map['name'],
       amount: map['amount'],
-      email: map['email'],
-      dueDate: DateTime.parse(map['dueDate']),
-      isPaid: map['isPaid']?? false,
-      purchaseHistory: (map['purchaseHistory'] as List<dynamic>? ?? [])
-    .map(
-      (entry) => PurchaseEntry.fromMap(
-        Map<String, dynamic>.from(entry as Map),
+      email: map['email'] ?? '',
+      phoneNumber: map['phoneNumber'] ?? '',
+      preferredChannel: ReminderChannel.values.firstWhere(
+        (channel) => channel.name == map['preferredChannel'],
+        orElse: () => ReminderChannel.email,
       ),
-    )
-    .toList(),
+      notificationId: (map['notificationId'] as num?)?.toInt(),
+      note: map['note'] as String? ?? '',
+      dueDate: DateTime.parse(map['dueDate']),
+      isPaid: map['isPaid'] ?? false,
+      purchaseHistory: (map['purchaseHistory'] as List<dynamic>? ?? [])
+          .map(
+            (entry) =>
+                PurchaseEntry.fromMap(Map<String, dynamic>.from(entry as Map)),
+          )
+          .toList(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:debtortrack/models/debtor_model.dart';
 import 'package:flutter/material.dart';
+import 'package:debtortrack/core/theme/app_colors.dart';
 
 class AddDebtorScreen extends StatefulWidget {
   final DebtorModel? existingDebtor;
@@ -11,12 +12,12 @@ class AddDebtorScreen extends StatefulWidget {
 }
 
 class _AddDebtorScreenState extends State<AddDebtorScreen> {
-  static const _brandPurple = Color(0xFF2B1950);
-  static const _accentPurple = Color(0xFF4D2C8D);
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _dueDateController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
   DateTime? _selectedDueDate;
   bool _isPaid = false;
   bool get _isEditing => widget.existingDebtor != null;
@@ -29,6 +30,8 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
       _nameController.text = debtor.name;
       _amountController.text = debtor.amount.toString();
       _emailController.text = debtor.email;
+      _phoneNumberController.text = debtor.phoneNumber;
+      _noteController.text = debtor.note;
       _selectedDueDate = debtor.dueDate;
       _dueDateController.text = debtor.dueDate
           .toLocal()
@@ -44,6 +47,8 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
     _nameController.dispose();
     _amountController.dispose();
     _emailController.dispose();
+    _phoneNumberController.dispose();
+    _noteController.dispose();
     _dueDateController.dispose();
     super.dispose();
   }
@@ -89,7 +94,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: _accentPurple, width: 2),
+        borderSide: const BorderSide(color: accentPurple, width: 2),
       ),
     );
   }
@@ -99,13 +104,12 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFCFAFF),
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit debtor' : 'Add debtor', 
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+        title: Text(
+          _isEditing ? 'Edit debtor' : 'Add debtor',
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: _brandPurple,
+        backgroundColor: brandPurple,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -119,7 +123,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
-                decoration: _fieldDecoration(label: 'Name', ),
+                decoration: _fieldDecoration(label: 'Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a name';
@@ -151,7 +155,15 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
 
               const SizedBox(height: 20),
 
-              // The Email textform
+              // The Number textform
+              TextFormField(
+                controller: _phoneNumberController,
+                keyboardType: TextInputType.phone,
+                decoration: _fieldDecoration(label: 'WhatsApp Number'),
+              ),
+
+              const SizedBox(height: 20),
+              // The Email Textform
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -167,6 +179,18 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
                 },
               ),
 
+              const SizedBox(height: 20),
+
+              // Note description
+              TextFormField(
+                controller: _noteController,
+                minLines: 3,
+                maxLines: 5,
+                maxLength: 300,
+                textCapitalization: TextCapitalization.sentences,
+                keyboardType: TextInputType.multiline,
+                decoration: _fieldDecoration(label: 'Notes (optional)'),
+              ),
               const SizedBox(height: 20),
 
               // The Date form
@@ -211,7 +235,10 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
                       final debtor = DebtorModel(
                         name: _nameController.text.trim(),
                         amount: double.parse(_amountController.text),
+                        phoneNumber: _phoneNumberController.text.trim(),
                         email: _emailController.text.trim(),
+                        note: _noteController.text.trim(),
+                        purchaseHistory: widget.existingDebtor?.purchaseHistory,
                         dueDate: _selectedDueDate!,
                         isPaid: _isPaid,
                       );
@@ -219,7 +246,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
                     }
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: _accentPurple,
+                    backgroundColor: accentPurple,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

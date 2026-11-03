@@ -1,6 +1,6 @@
 import 'package:debtortrack/screens/debtor_list_screen.dart';
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding2_screen.dart';
 import 'onboarding_illustration.dart';
 import '../core/theme/app_colors.dart';
@@ -8,7 +8,6 @@ import '../core/theme/app_colors.dart';
 class Onboarding1Screen extends StatelessWidget {
   const Onboarding1Screen({super.key});
 
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,7 +21,9 @@ class Onboarding1Screen extends StatelessWidget {
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('onboardingComplete', true);
                     // Later: go straight to the debtor list screen.
                     Navigator.pushAndRemoveUntil(
                       context,
@@ -37,9 +38,9 @@ class Onboarding1Screen extends StatelessWidget {
                   child: Text(
                     'Skip',
                     style: ThemeData.light().textTheme.labelLarge?.copyWith(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -55,13 +56,13 @@ class Onboarding1Screen extends StatelessWidget {
 
               const Spacer(),
 
-               Text(
+              Text(
                 'Never chase a payment from memory again',
                 style: ThemeData.light().textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
                 ),
               ),
 
@@ -113,7 +114,7 @@ class Onboarding1Screen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child:  Text(
+                  child: Text(
                     'Next',
                     style: ThemeData.light().textTheme.titleLarge?.copyWith(
                       fontSize: 20,

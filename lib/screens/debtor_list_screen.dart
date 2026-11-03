@@ -1,6 +1,5 @@
 import 'package:debtortrack/core/utilities/saved_currency_code.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'add_debtor.dart';
 import 'debtor_details_screen.dart';
@@ -12,6 +11,7 @@ import 'dart:convert';
 
 import 'package:debtortrack/core/utilities/format_moni_currency.dart';
 import 'package:debtortrack/core/theme/app_colors.dart';
+import 'package:debtortrack/core/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DebtorListScreen extends StatefulWidget {
@@ -75,6 +75,9 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
     final String? debtorsJson = prefs.getString('debtors');
     if (debtorsJson != null) {
       final List<dynamic> debtorList = jsonDecode(debtorsJson);
+      final needsNotificationIdMigration = debtorList.any(
+        (debtorMap) => debtorMap is Map && debtorMap['notificationId'] == null,
+      );
       setState(() {
         debtors.clear();
         debtors.addAll(
@@ -83,6 +86,12 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
               .toList(),
         );
       });
+      if (needsNotificationIdMigration) {
+        await _saveDebtors();
+      }
+      for (final debtor in debtors) {
+        await _syncDueDateReminder(debtor);
+      }
     }
   }
 
@@ -93,6 +102,24 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
       debtors.map((debtor) => debtor.toMap()).toList(),
     );
     await prefs.setString('debtors', debtorsJson);
+  }
+
+  Future<void> _syncDueDateReminder(DebtorModel debtor) async {
+    try {
+      if (debtor.isPaid) {
+        await NotificationService.instance.cancelDueDateReminder(
+          debtor.notificationId,
+        );
+      } else {
+        await NotificationService.instance.scheduleDueDateReminder(
+          id: debtor.notificationId,
+          debtorName: debtor.name,
+          dueDate: debtor.dueDate,
+        );
+      }
+    } catch (error) {
+      debugPrint('Could not update due-date reminder: $error');
+    }
   }
 
   // Adds a method to display the list of debtors or a message if the list is empty
@@ -173,6 +200,9 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                   final originalIndex = debtors.indexOf(debtor);
                   setState(() => debtors.removeAt(originalIndex));
                   await _saveDebtors();
+                  await NotificationService.instance.cancelDueDateReminder(
+                    debtor.notificationId,
+                  );
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -191,6 +221,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                   final originalIndex = debtors.indexOf(debtor);
                   setState(() => debtors[originalIndex] = result.debtor!);
                   await _saveDebtors();
+                  await _syncDueDateReminder(result.debtor!);
                 }
               },
 
@@ -393,6 +424,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
             setState(() => debtors.add(debtor));
             // Save the updated list of debtors to shared preferences
             await _saveDebtors();
+            await _syncDueDateReminder(debtor);
           }
         },
         backgroundColor: accentPurple,

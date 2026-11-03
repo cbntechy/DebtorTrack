@@ -2,11 +2,26 @@ import 'package:debtortrack/screens/debtor_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'onboarding_illustration.dart';
 import '../core/theme/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Onboarding4Screen extends StatelessWidget {
   const Onboarding4Screen({super.key});
 
+Future<void> _finishOnboarding(BuildContext context) async {
+  final prefs = await SharedPreferences.getInstance();
 
+  await prefs.setBool('onboardingComplete', true);
+
+  if (!context.mounted) return;
+
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const DebtorListScreen(),
+    ),
+    (route) => false,
+  );
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,15 +86,7 @@ class Onboarding4Screen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     // Later: open DebtorListScreen.
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return DebtorListScreen();
-                        },
-                      ),
-                      (route) => false,
-                    );
+                    _finishOnboarding(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
