@@ -9,6 +9,7 @@ class DebtorModel {
   final String phoneNumber;
   final ReminderChannel preferredChannel;
   final int notificationId;
+  final String id;
   final DateTime dueDate;
   final String note;
   bool isPaid;
@@ -23,12 +24,14 @@ class DebtorModel {
     int? notificationId,
     required this.dueDate,
     String? note,
+    String? id,
     required this.isPaid,
     List<PurchaseEntry>? purchaseHistory,
   }) : notificationId =
            notificationId ??
-               DateTime.now().microsecondsSinceEpoch.remainder(2147483647),
+           DateTime.now().microsecondsSinceEpoch.remainder(2147483647),
        note = note ?? '',
+       id = id ?? DateTime.now().microsecondsSinceEpoch.toString(),
        purchaseHistory = purchaseHistory ?? [];
 
   String getStatus() {
@@ -56,6 +59,7 @@ class DebtorModel {
       'phoneNumber': phoneNumber,
       'preferredChannel': preferredChannel.name,
       'notificationId': notificationId,
+      'id': id,
       'dueDate': dueDate.toIso8601String(),
       'note': note,
       'isPaid': isPaid,
@@ -74,6 +78,7 @@ class DebtorModel {
         orElse: () => ReminderChannel.email,
       ),
       notificationId: (map['notificationId'] as num?)?.toInt(),
+      id: map['id'] as String?,
       note: map['note'] as String? ?? '',
       dueDate: DateTime.parse(map['dueDate']),
       isPaid: map['isPaid'] ?? false,

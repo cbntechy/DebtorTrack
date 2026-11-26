@@ -2,14 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:debtortrack/core/utilities/saved_currency_code.dart';
 import 'package:debtortrack/core/services/notification_service.dart';
+
 import 'onboardings/onboarding1_screen.dart';
 import 'screens/debtor_list_screen.dart';
 import 'core/theme/app_theme.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize currency preferences before running the app
+
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabasePublishableKey =
+      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+
+  if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty) {
+    throw StateError('Supabase configuration is missing.');
+  }
+
+  await Supabase.initialize(
+    url: supabaseUrl,
+    publishableKey: supabasePublishableKey,
+  );
+
   await initializeCurrencyPreferences();
   await NotificationService.instance.init();
 

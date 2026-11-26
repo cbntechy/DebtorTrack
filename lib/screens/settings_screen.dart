@@ -4,9 +4,16 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:currency_picker/currency_picker.dart';
 import 'package:debtortrack/core/services/notification_service.dart';
+import 'package:debtortrack/screens/message_templates_screen.dart';
 
 import '../core/utilities/share_app.dart';
 import '../core/utilities/rate_app.dart';
+
+import 'package:debtortrack/core/services/entitlement_service.dart';
+import 'package:debtortrack/auth/auth_screen.dart';
+import 'package:debtortrack/screens/upgrade_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:debtortrack/screens/backup_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -34,6 +41,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your browser could not open the link.')),
       );
+    }
+  }
+
+  // Function to enable backup
+  Future<void> _checkBackup(BuildContext context) async {
+    if (!EntitlementService.instance.isPro) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const UpgradeScreen()),
+      );
+      return;
+    }
+
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) {
+      final signedIn = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(builder: (context) => const AuthScreen()),
+      );
+
+      if (signedIn == true && mounted) {
+        setState(() {});
+      }
+
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    final restored = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const BackupScreen()),
+    );
+    
+if (!context.mounted) return;
+    if (restored == true && mounted) {
+      Navigator.pop(context, true);
     }
   }
 
@@ -84,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await prefs.setString('targetCurrency', currency.code);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Currency set to ${currency.name}')),
+            SnackBar(content: Text('Currency set to ${currency.name}'), backgroundColor: brandPurple,),
           );
         }
       },
@@ -126,6 +171,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               title: Text(
+                'Backup copy',
+                style: ThemeData.light().textTheme.titleMedium?.copyWith(
+                  color: accentPurple,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              subtitle: Text(
+                'Make and restore backups',
+                style: ThemeData.light().textTheme.labelMedium?.copyWith(
+                  color: mutedTextColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              minVerticalPadding: 18,
+
+              onTap: () => _checkBackup(context),
+              leading: Card(
+                elevation: 0,
+                margin: EdgeInsets.all(8),
+                child: Image.asset(
+                  'assets/icons/icons8-notification-48.png',
+                  height: 150,
+                ),
+              ),
+            ),
+
+            ListTile(
+              title: Text(
                 'Notification',
                 style: ThemeData.light().textTheme.titleMedium?.copyWith(
                   color: accentPurple,
@@ -153,7 +228,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
+            Divider(thickness: 1, color: Color.fromARGB(255, 95, 67, 153)),
+            ListTile(
+              title: Text(
+                'Message templates',
+                style: ThemeData.light().textTheme.titleMedium?.copyWith(
+                  color: accentPurple,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              subtitle: Text(
+                'Choose your default reminder message',
+                style: ThemeData.light().textTheme.labelMedium?.copyWith(
+                  color: mutedTextColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              minVerticalPadding: 18,
 
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MessageTemplatesScreen(),
+                  ),
+                );
+              },
+              leading: Card(
+                elevation: 0,
+                margin: EdgeInsets.all(8),
+                child: Image.asset(
+                  'assets/icons/icons8-stack-of-coins-100.png',
+                  height: 150,
+                ),
+              ),
+
+              trailing: Icon(Icons.chevron_right),
+            ),
+            Divider(thickness: 1, color: Color.fromARGB(255, 95, 67, 153)),
             ListTile(
               title: Text(
                 'Currency',

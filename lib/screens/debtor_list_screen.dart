@@ -9,10 +9,14 @@ import 'package:debtortrack/models/debtor_model.dart';
 
 import 'dart:convert';
 
+import 'package:debtortrack/core/services/entitlement_service.dart';
+import 'package:debtortrack/screens/upgrade_screen.dart';
 import 'package:debtortrack/core/utilities/format_moni_currency.dart';
 import 'package:debtortrack/core/theme/app_colors.dart';
 import 'package:debtortrack/core/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:debtortrack/screens/bulk_reminder_queue_screen.dart';
+import 'package:debtortrack/core/services/template_service.dart';
 
 class DebtorListScreen extends StatefulWidget {
   const DebtorListScreen({super.key});
@@ -23,15 +27,159 @@ class DebtorListScreen extends StatefulWidget {
 
 class _DebtorListScreenState extends State<DebtorListScreen> {
   final List<DebtorModel> debtors = [];
+  final Set<String> _selectedDebtorIds = {};
+
+  bool get _isSelecting => _selectedDebtorIds.isNotEmpty;
+
+  void _toggleDebtorSelection(DebtorModel debtor) {
+    setState(() {
+      if (_selectedDebtorIds.contains(debtor.id)) {
+        _selectedDebtorIds.remove(debtor.id);
+      } else {
+        _selectedDebtorIds.add(debtor.id);
+      }
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedDebtorIds.clear();
+    });
+  }
+
+  Future<void> _showBulkReminderSheet() async {
+    final selectedDebtors = debtors
+        .where(
+          (debtor) => _selectedDebtorIds.contains(debtor.id) && !debtor.isPaid,
+        )
+        .toList();
+
+    if (selectedDebtors.isEmpty) return;
+
+    final templateService = TemplateService();
+    final templates = await templateService.loadTemplates();
+    final defaultTemplateId = await templateService.loadDefaultTemplateId();
+
+    if (!mounted) return;
+
+    final selectedTemplate = templates.firstWhere(
+      (template) => template.id == defaultTemplateId,
+      orElse: () => templates.first,
+    );
+
+    final emailCount = selectedDebtors
+        .where(
+          (debtor) =>
+              debtor.preferredChannel == ReminderChannel.email &&
+              debtor.email.trim().isNotEmpty,
+        )
+        .length;
+
+    final whatsappCount = selectedDebtors
+        .where(
+          (debtor) =>
+              debtor.preferredChannel == ReminderChannel.whatsapp &&
+              debtor.phoneNumber.trim().isNotEmpty,
+        )
+        .length;
+
+    final unavailableCount =
+        selectedDebtors.length - emailCount - whatsappCount;
+
+    final reachableDebtors = selectedDebtors.where((debtor) {
+      if (debtor.preferredChannel == ReminderChannel.email) {
+        return debtor.email.trim().isNotEmpty;
+      }
+
+      return debtor.phoneNumber.trim().isNotEmpty;
+    }).toList();
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Send selected reminders',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text('${selectedDebtors.length} unpaid debtor(s) selected.'),
+                const SizedBox(height: 20),
+
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.message_outlined),
+                  title: const Text('Message template'),
+                  subtitle: Text(selectedTemplate.name),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.email_outlined),
+                  title: const Text('Email reminders'),
+                  trailing: Text('$emailCount'),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.chat_outlined),
+                  title: const Text('WhatsApp reminders'),
+                  trailing: Text('$whatsappCount'),
+                ),
+
+                if (unavailableCount > 0)
+                  Text(
+                    '$unavailableCount debtor(s) will be skipped because their preferred contact detail is missing.',
+                  ),
+
+                const SizedBox(height: 16),
+
+                FilledButton.icon(
+                  onPressed: reachableDebtors.isEmpty
+                      ? null
+                      : () async {
+                          Navigator.pop(sheetContext);
+
+                          final completed = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BulkReminderQueueScreen(
+                                debtors: reachableDebtors,
+                                template: selectedTemplate,
+                                currencyCode: selectedCode,
+                              ),
+                            ),
+                          );
+
+                          if (completed == true && mounted) {
+                            _clearSelection();
+                          }
+                        },
+                  icon: const Icon(Icons.send_outlined),
+                  label: const Text('Start sending'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  int getunpaidDebtorCount() {
+    return debtors.where((debtor) => !debtor.isPaid).length;
+  }
 
   double get _totalOutstanding => debtors
       .where((debtor) => !debtor.isPaid)
       .fold(0, (total, debtor) => total + debtor.amount);
 
   String _searchQuery = '';
-
- 
-
 
   List<DebtorModel> get _filteredDebtors {
     final query = _searchQuery.trim().toLowerCase();
@@ -75,8 +223,12 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
     final String? debtorsJson = prefs.getString('debtors');
     if (debtorsJson != null) {
       final List<dynamic> debtorList = jsonDecode(debtorsJson);
-      final needsNotificationIdMigration = debtorList.any(
-        (debtorMap) => debtorMap is Map && debtorMap['notificationId'] == null,
+      final needsDebtorMigration = debtorList.any(
+        (debtorMap) =>
+            debtorMap is Map &&
+            (debtorMap['notificationId'] == null ||
+                debtorMap['id'] == null ||
+                debtorMap['id'] == ''),
       );
       setState(() {
         debtors.clear();
@@ -86,7 +238,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
               .toList(),
         );
       });
-      if (needsNotificationIdMigration) {
+      if (needsDebtorMigration) {
         await _saveDebtors();
       }
       for (final debtor in debtors) {
@@ -178,7 +330,18 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(18),
+
+              onLongPress: debtor.isPaid
+                  ? null
+                  : () => _toggleDebtorSelection(debtor),
+
               onTap: () async {
+                if (_isSelecting) {
+                  if (!debtor.isPaid) {
+                    _toggleDebtorSelection(debtor);
+                  }
+                  return;
+                }
                 // The details screen returns either an edit or delete action.
                 final result = await Navigator.push<DebtorDetailsResult>(
                   context,
@@ -233,6 +396,15 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    if (_isSelecting) ...[
+                      Checkbox(
+                        value: _selectedDebtorIds.contains(debtor.id),
+                        onChanged: debtor.isPaid
+                            ? null
+                            : (_) => _toggleDebtorSelection(debtor),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     CircleAvatar(
                       radius: 25,
                       backgroundColor: accentPurple,
@@ -321,22 +493,38 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'DebtorTrack',
+          _isSelecting
+              ? '${_selectedDebtorIds.length} selected'
+              : 'DebtorTrack',
           style: Theme.of(context).textTheme.titleLarge
               ?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            color: const Color(0xFFFCFAFF),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-              await _loadTargetCurrency(); // Reload the target currency after returning from settings
-            },
-          ),
+          if (_isSelecting)
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: 'Cancel selection',
+              onPressed: _clearSelection,
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              color: const Color(0xFFFCFAFF),
+              onPressed: () async {
+                final restored = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+
+                if (restored == true) {
+                  await _loadDebtors();
+                }
+
+                await _loadTargetCurrency(); // Reload the target currency after returning from settings
+              },
+            ),
         ],
       ),
       body: Column(
@@ -377,7 +565,7 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
                       });
                     },
                     onSubmitted: (_) {
-                       FocusScope.of(context).unfocus();
+                      FocusScope.of(context).unfocus();
                     },
                     decoration: InputDecoration(
                       hintText: 'Search debtors',
@@ -413,24 +601,54 @@ class _DebtorListScreenState extends State<DebtorListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // Navigate to the Add Debtor screen
-          final debtor = await Navigator.push<DebtorModel>(
-            context,
-            MaterialPageRoute(builder: (context) => AddDebtorScreen()),
-          );
-          if (debtor != null) {
-            setState(() => debtors.add(debtor));
-            // Save the updated list of debtors to shared preferences
-            await _saveDebtors();
-            await _syncDueDateReminder(debtor);
-          }
-        },
-        backgroundColor: accentPurple,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _isSelecting
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                // Navigate to the Add Debtor screen
+                final debtor = await Navigator.push<DebtorModel>(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddDebtorScreen()),
+                );
+                if (debtor != null) {
+                  final hasReachedFreeUnpaidLimit =
+                      !EntitlementService.instance.isPro &&
+                      !debtor.isPaid &&
+                      getunpaidDebtorCount() >= 5;
+
+                  if (hasReachedFreeUnpaidLimit) {
+                    if (!context.mounted) return;
+
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UpgradeScreen(),
+                      ),
+                    );
+                    return;
+                  }
+
+                  setState(() => debtors.add(debtor));
+                  await _saveDebtors();
+                  await _syncDueDateReminder(debtor);
+                }
+              },
+              backgroundColor: accentPurple,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add),
+            ),
+      bottomNavigationBar: _isSelecting
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton.icon(
+                  onPressed: _showBulkReminderSheet,
+                  icon: const Icon(Icons.send_outlined),
+                  label: Text('Send reminders (${_selectedDebtorIds.length})'),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

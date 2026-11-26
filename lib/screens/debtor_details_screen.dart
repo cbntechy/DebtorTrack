@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:debtortrack/models/purchase_entry.dart';
 import 'package:debtortrack/screens/add_purchase_screen.dart';
+import 'package:debtortrack/models/message_template.dart';
 import '../core/theme/app_colors.dart';
+import 'package:debtortrack/screens/upgrade_screen.dart';
+import 'package:debtortrack/core/services/template_service.dart';
 
 // This tells the list screen what happened when the details screen closed.
 enum DebtorDetailsAction { updated, deleted }
@@ -36,33 +39,77 @@ class DebtorDetailsScreen extends StatefulWidget {
 }
 
 class _DebtorDetailsScreenState extends State<DebtorDetailsScreen> {
-  Future<void> _addPurchase() async {
-  final purchase = await Navigator.push<PurchaseEntry>(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const AddPurchaseScreen(),
-    ),
-  );
+  // For the templates
+  final TemplateService _templateService = TemplateService();
 
-  if (purchase == null || !mounted) return;
+  List<MessageTemplate> _templates = [];
+
+  String? _selectedTemplateId;
+
+  Future<void> _loadTemplates() async {
+  final templates = await _templateService.loadTemplates();
+  final defaultTemplateId = await _templateService.loadDefaultTemplateId();
+
+  if (!mounted) return;
+
+  final selectedTemplateId = templates.any(
+    (template) => template.id == defaultTemplateId,
+  )
+      ? defaultTemplateId
+      : templates.first.id;
 
   setState(() {
-    widget.debtor.purchaseHistory.add(purchase);
+    _templates = templates;
+    _selectedTemplateId = selectedTemplateId;
   });
 }
-  String _reminderBody() {
-    final formattedAmount = formatMoniCurrency(
-      widget.debtor.amount,
-      currencyCode: widget.currencyCode,
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTemplates();
+  }
+
+  Future<void> _addPurchase() async {
+    final purchase = await Navigator.push<PurchaseEntry>(
+      context,
+      MaterialPageRoute(builder: (context) => const AddPurchaseScreen()),
     );
 
-    return
-        'Hello ${widget.debtor.name},\n\n'
-        'This is a gentle reminder that your outstanding balance of '
-        '$formattedAmount is due on '
-        '${widget.debtor.dueDate.toLocal().toIso8601String().split('T').first}.\n\n'
-        'Thank you.';
+    if (purchase == null || !mounted) return;
+
+    setState(() {
+      widget.debtor.purchaseHistory.add(purchase);
+    });
   }
+
+  String _reminderBody() {
+  final formattedAmount = formatMoniCurrency(
+    widget.debtor.amount,
+    currencyCode: widget.currencyCode,
+  );
+
+  final formattedDueDate = widget.debtor.dueDate
+      .toLocal()
+      .toIso8601String()
+      .split('T')
+      .first;
+
+  if (_templates.isEmpty) {
+    return 'Hello ${widget.debtor.name}, your payment of '
+        '$formattedAmount is due on $formattedDueDate.';
+  }
+
+  final selectedTemplate = _templates.firstWhere(
+    (template) => template.id == _selectedTemplateId,
+    orElse: () => _templates.first,
+  );
+
+  return selectedTemplate.body
+      .replaceAll('{name}', widget.debtor.name)
+      .replaceAll('{amount}', formattedAmount)
+      .replaceAll('{dueDate}', formattedDueDate);
+}
 
   Future<void> _sendReminder(BuildContext context) async {
     if (widget.debtor.preferredChannel == ReminderChannel.email) {
@@ -117,7 +164,8 @@ class _DebtorDetailsScreenState extends State<DebtorDetailsScreen> {
   }
 
   void _showMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _editDebtor(BuildContext context) async {
@@ -191,12 +239,14 @@ class _DebtorDetailsScreenState extends State<DebtorDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initial = widget.debtor.name.isEmpty ? '?' : widget.debtor.name[0].toUpperCase();
+    final initial = widget.debtor.name.isEmpty
+        ? '?'
+        : widget.debtor.name[0].toUpperCase();
     final preferredContact =
         widget.debtor.preferredChannel == ReminderChannel.email
         ? widget.debtor.email
         : widget.debtor.phoneNumber;
-   // final dueDate = widget.debtor.dueDate.toLocal().toIso8601String().split('T').first;
+    // final dueDate = widget.debtor.dueDate.toLocal().toIso8601String().split('T').first;
     final status = widget.debtor.getStatus();
     final statusColor = switch (status) {
       'Overdue' => const Color(0xFFC62828),
@@ -340,6 +390,67 @@ class _DebtorDetailsScreenState extends State<DebtorDetailsScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+
+                      // Reminder Template
+                      // Reminder Template
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Reminder message',
+                            style: ThemeData.light().textTheme.labelMedium
+                                ?.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: mutedTextColor,
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedTemplateId,
+                            isExpanded: true,
+                            hint: const Text('Loading templates...'),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            items: _templates.map((template) {
+                              return DropdownMenuItem<String>(
+                                value: template.id,
+                                child: Text(template.name),
+                              );
+                            }).toList(),
+                            onChanged: (templateId) {
+                              if (templateId == null) return;
+
+                              setState(() {
+                                _selectedTemplateId = templateId;
+                              });
+                            },
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          TextButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UpgradeScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.add),
+                            label: const Text('Write my own template · Pro'),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
                       Row(
                         children: [
                           Expanded(
@@ -350,7 +461,9 @@ class _DebtorDetailsScreenState extends State<DebtorDetailsScreen> {
                                       widget.debtor.isPaid = true;
                                       Navigator.pop(
                                         context,
-                                        DebtorDetailsResult.updated(widget.debtor),
+                                        DebtorDetailsResult.updated(
+                                          widget.debtor,
+                                        ),
                                       );
                                     },
                               icon: const Icon(Icons.check),
@@ -427,76 +540,70 @@ class _DebtorDetailsScreenState extends State<DebtorDetailsScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                    
-                     
 
+                      const SizedBox(height: 8),
 
+                      Text(
+                        widget.debtor.note.isEmpty
+                            ? 'No notes added.'
+                            : widget.debtor.note,
+                        style: const TextStyle(
+                          color: Color(0xFF24202A),
+                          height: 1.5,
+                        ),
+                      ),
 
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'PURCHASE HISTORY',
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  color: accentPurple,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: _addPurchase,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add purchase'),
+                          ),
+                        ],
+                      ),
 
-const SizedBox(height: 8),
+                      if (widget.debtor.purchaseHistory.isEmpty)
+                        const Text(
+                          'No purchases recorded yet.',
+                          style: TextStyle(color: Color(0xFF716580)),
+                        )
+                      else
+                        ...widget.debtor.purchaseHistory.map((entry) {
+                          final purchaseDate = entry.purchaseDate
+                              .toLocal()
+                              .toIso8601String()
+                              .split('T')
+                              .first;
 
-Text(
-  widget.debtor.note.isEmpty
-      ? 'No notes added.'
-      : widget.debtor.note,
-  style: const TextStyle(
-    color: Color(0xFF24202A),
-    height: 1.5,
-  ),
-),
-
-const SizedBox(height: 8),
-Row(
-  children: [
-    Text(
-      'PURCHASE HISTORY',
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: accentPurple,
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-    const Spacer(),
-    TextButton.icon(
-      onPressed: _addPurchase,
-      icon: const Icon(Icons.add),
-      label: const Text('Add purchase'),
-    ),
-  ],
-),
-
-if (widget.debtor.purchaseHistory.isEmpty)
-  const Text(
-    'No purchases recorded yet.',
-    style: TextStyle(color: Color(0xFF716580)),
-  )
-else
-  ...widget.debtor.purchaseHistory.map((entry) {
-    final purchaseDate = entry.purchaseDate
-        .toLocal()
-        .toIso8601String()
-        .split('T')
-        .first;
-
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: const Icon(
-        Icons.receipt_long_outlined,
-        color: accentPurple,
-      ),
-      title: Text(entry.description),
-      trailing: Text(
-        purchaseDate,
-        style:  Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w100,
-                                color: Colors.black,
-                              ),
-      ),
-    );
-  }),
-
- 
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(
+                              Icons.receipt_long_outlined,
+                              color: accentPurple,
+                            ),
+                            title: Text(entry.description),
+                            trailing: Text(
+                              purchaseDate,
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w100,
+                                    color: Colors.black,
+                                  ),
+                            ),
+                          );
+                        }),
                     ],
                   ),
                 ),

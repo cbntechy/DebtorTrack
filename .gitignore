@@ -54,3 +54,7 @@ app.*.map.json
 
 # inspo
 /lib/inspo/
+
+/config/supabase.dev.json
+
+/.vscode/launch.json

@@ -20,6 +20,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
   final TextEditingController _noteController = TextEditingController();
   DateTime? _selectedDueDate;
   bool _isPaid = false;
+  ReminderChannel _preferredChannel = ReminderChannel.email;
   bool get _isEditing => widget.existingDebtor != null;
 
   @override
@@ -31,6 +32,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
       _amountController.text = debtor.amount.toString();
       _emailController.text = debtor.email;
       _phoneNumberController.text = debtor.phoneNumber;
+      _preferredChannel = debtor.preferredChannel;
       _noteController.text = debtor.note;
       _selectedDueDate = debtor.dueDate;
       _dueDateController.text = debtor.dueDate
@@ -160,6 +162,23 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
                 controller: _phoneNumberController,
                 keyboardType: TextInputType.phone,
                 decoration: _fieldDecoration(label: 'WhatsApp Number'),
+                validator: (value) {
+                  final phoneNumber = (value ?? '').replaceAll(
+                    RegExp(r'\D'),
+                    '',
+                  );
+
+                  if (_preferredChannel == ReminderChannel.whatsapp &&
+                      phoneNumber.isEmpty) {
+                    return 'Enter a WhatsApp number for WhatsApp reminders';
+                  }
+
+                  if (phoneNumber.isNotEmpty && phoneNumber.length < 10) {
+                    return 'Enter a valid number with country code';
+                  }
+
+                  return null;
+                },
               ),
 
               const SizedBox(height: 20),
@@ -169,16 +188,58 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: _fieldDecoration(label: 'Email address'),
                 validator: (value) {
-                  if (value == null ||
-                      value.isEmpty ||
-                      !value.contains('@') ||
-                      !value.contains('.com')) {
+                  final email = value?.trim() ?? '';
+
+                  if (_preferredChannel == ReminderChannel.email &&
+                      email.isEmpty) {
+                    return 'Enter an email address for email reminders';
+                  }
+
+                  if (email.isNotEmpty &&
+                      !email.contains('@') &&
+                      !email.contains('.')) {
                     return 'Please enter a valid email';
                   }
+
                   return null;
                 },
               ),
 
+              const SizedBox(height: 20),
+              // Preferred channel
+              Text(
+                'Preferred channel for reminders',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: ChoiceChip(
+                      label: Text('Email'),
+                      selected: _preferredChannel == ReminderChannel.email,
+                      onSelected: (_) {
+                        setState(() {
+                          _preferredChannel = ReminderChannel.email;
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: ChoiceChip(
+                      label: Text('WhatsApp'),
+                      selected: _preferredChannel == ReminderChannel.whatsapp,
+                      onSelected: (_) {
+                        setState(() {
+                          _preferredChannel = ReminderChannel.whatsapp;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
 
               // Note description
@@ -212,6 +273,7 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
                 readOnly: true,
               ),
 
+              const SizedBox(height: 20),
               if (_isEditing)
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -237,10 +299,13 @@ class _AddDebtorScreenState extends State<AddDebtorScreen> {
                         amount: double.parse(_amountController.text),
                         phoneNumber: _phoneNumberController.text.trim(),
                         email: _emailController.text.trim(),
+                        preferredChannel: _preferredChannel,
                         note: _noteController.text.trim(),
                         purchaseHistory: widget.existingDebtor?.purchaseHistory,
                         dueDate: _selectedDueDate!,
                         isPaid: _isPaid,
+                        id: widget.existingDebtor?.id,
+                        notificationId: widget.existingDebtor?.notificationId,
                       );
                       Navigator.pop(context, debtor);
                     }
