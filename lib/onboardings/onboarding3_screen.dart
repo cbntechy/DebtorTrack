@@ -26,6 +26,7 @@ class Onboarding3Screen extends StatelessWidget {
                   onPressed: () async {
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setBool('onboardingComplete', true);
+                      if (!context.mounted) return;
                     // Later: go straight to the debtor list screen.
                     Navigator.pushAndRemoveUntil(
                       context,

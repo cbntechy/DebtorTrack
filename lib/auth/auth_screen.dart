@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:debtortrack/core/services/entitlement_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -18,13 +20,27 @@ class _AuthScreenState extends State<AuthScreen> {
   void initState() {
     super.initState();
 
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
-      data,
-    ) {
-      if (data.event == AuthChangeEvent.signedIn && mounted) {
-        Navigator.pop(context, true);
-      }
-    });
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
+      _handleAuthState,
+    );
+  }
+
+  Future<void> _handleAuthState(AuthState data) async {
+    if (data.event != AuthChangeEvent.signedIn) return;
+
+    final user = data.session?.user;
+    if (user == null) return;
+
+    try {
+      await Purchases.logIn(user.id);
+      await EntitlementService.instance.refreshProStatus();
+    } catch (_) {
+      // Google sign-in still succeeds even if RevenueCat is temporarily offline.
+    }
+
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
   }
 
   @override

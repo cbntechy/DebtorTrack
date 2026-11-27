@@ -1,13 +1,19 @@
 import 'package:debtortrack/screens/debtor_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'onboarding2_screen.dart';
 import 'onboarding_illustration.dart';
 import '../core/theme/app_colors.dart';
 
-class Onboarding1Screen extends StatelessWidget {
+class Onboarding1Screen extends StatefulWidget {
   const Onboarding1Screen({super.key});
 
+  @override
+  State<Onboarding1Screen> createState() => _Onboarding1ScreenState();
+}
+
+class _Onboarding1ScreenState extends State<Onboarding1Screen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +30,7 @@ class Onboarding1Screen extends StatelessWidget {
                   onPressed: () async {
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setBool('onboardingComplete', true);
+                    if (!context.mounted) return;
                     // Later: go straight to the debtor list screen.
                     Navigator.pushAndRemoveUntil(
                       context,

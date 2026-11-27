@@ -6,18 +6,21 @@ import 'package:debtortrack/core/services/notification_service.dart';
 import 'onboardings/onboarding1_screen.dart';
 import 'screens/debtor_list_screen.dart';
 import 'core/theme/app_theme.dart';
-
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'core/services/entitlement_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
+  const revenueCatAndroidApiKey =
+    String.fromEnvironment('REVENUECAT_ANDROID_API_KEY');
   const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   const supabasePublishableKey =
       String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
 
-  if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty) {
+  if (supabaseUrl.isEmpty || supabasePublishableKey.isEmpty || revenueCatAndroidApiKey.isEmpty) {
     throw StateError('Supabase configuration is missing.');
   }
 
@@ -25,6 +28,14 @@ void main() async {
     url: supabaseUrl,
     publishableKey: supabasePublishableKey,
   );
+
+  final revenueCatConfiguration =
+    PurchasesConfiguration(revenueCatAndroidApiKey)
+      ..appUserID = Supabase.instance.client.auth.currentUser?.id;
+
+await Purchases.configure(revenueCatConfiguration);
+
+await EntitlementService.instance.refreshProStatus();
 
   await initializeCurrencyPreferences();
   await NotificationService.instance.init();

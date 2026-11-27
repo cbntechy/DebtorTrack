@@ -1,8 +1,148 @@
 import 'package:flutter/material.dart';
 import 'package:debtortrack/core/theme/app_colors.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:debtortrack/core/services/entitlement_service.dart';
+import 'package:flutter/services.dart';
 
-class UpgradeScreen extends StatelessWidget {
+class UpgradeScreen extends StatefulWidget {
   const UpgradeScreen({super.key});
+
+  @override
+  State<UpgradeScreen> createState() => _UpgradeScreenState();
+}
+
+class _UpgradeScreenState extends State<UpgradeScreen> {
+  Package? _lifetimePackage;
+  bool _isLoadingOffer = true;
+  bool _isPurchasing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOffering();
+  }
+
+  Future<void> _loadOffering() async {
+    try {
+      final offerings = await Purchases.getOfferings();
+
+      if (!mounted) return;
+
+      setState(() {
+        _lifetimePackage = offerings.current?.lifetime;
+        _isLoadingOffer = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingOffer = false;
+      });
+    }
+  }
+
+  Future<void> _purchasePro() async {
+    final lifetimePackage = _lifetimePackage;
+
+    if (lifetimePackage == null) {
+      return;
+    }
+
+    setState(() {
+      _isPurchasing = true;
+    });
+
+    try {
+      final result = await Purchases.purchase(
+        PurchaseParams.package(lifetimePackage),
+      );
+
+      final hasPro = result.customerInfo.entitlements.active.containsKey(
+        'debtortrack_pro',
+      );
+
+      EntitlementService.instance.updateProStatus(hasPro);
+
+      if (!mounted) return;
+
+      if (hasPro) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('DebtorTrack Pro unlocked!')),
+        );
+        Navigator.pop(context, true);
+      }
+    } on PlatformException catch (error) {
+      final errorCode = PurchasesErrorHelper.getErrorCode(error);
+
+      if (errorCode != PurchasesErrorCode.purchaseCancelledError && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Purchase could not be completed. Please try again.'),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Something went wrong. Please try again.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPurchasing = false;
+        });
+      }
+    }
+  }
+
+  //
+  Future<void> _restorePurchase() async {
+    setState(() {
+      _isPurchasing = true;
+    });
+
+    try {
+      final customerInfo = await Purchases.restorePurchases();
+
+      final hasPro = customerInfo.entitlements.active.containsKey(
+        'debtortrack_pro',
+      );
+
+      EntitlementService.instance.updateProStatus(hasPro);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            hasPro
+                ? 'DebtorTrack Pro restored!'
+                : 'No previous Pro purchase was found.',
+          ),
+        ),
+      );
+
+      if (hasPro) {
+        Navigator.pop(context, true);
+      }
+    } on PlatformException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not restore purchases.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPurchasing = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,16 +181,16 @@ class UpgradeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Pay once. Keep it forver.',
+                'Pay once. Keep it forever.',
                 style: ThemeData.light().textTheme.bodyMedium?.copyWith(
                   color: cardColor,
                   fontSize: 16,
                 ),
                 textAlign: TextAlign.center,
               ),
-          
+
               const SizedBox(height: 20),
-          
+
               ListTile(
                 leading: const Icon(Icons.check, color: Colors.white),
                 title: Text(
@@ -61,9 +201,9 @@ class UpgradeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-          
+
               const SizedBox(height: 20),
-          
+
               ListTile(
                 leading: const Icon(Icons.check, color: Colors.white),
                 title: Text(
@@ -74,9 +214,9 @@ class UpgradeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-          
+
               const SizedBox(height: 20),
-          
+
               ListTile(
                 leading: const Icon(Icons.check, color: Colors.white),
                 title: Text(
@@ -87,9 +227,9 @@ class UpgradeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-          
+
               const SizedBox(height: 20),
-          
+
               ListTile(
                 leading: const Icon(Icons.check, color: Colors.white),
                 title: Text(
@@ -100,9 +240,9 @@ class UpgradeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-          
+
               const SizedBox(height: 20),
-          
+
               ListTile(
                 leading: const Icon(Icons.check, color: Colors.white),
                 title: Text(
@@ -114,13 +254,16 @@ class UpgradeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-          
+
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    '\$2.99',
+                    _isLoadingOffer
+                        ? 'Loading price...'
+                        : _lifetimePackage?.storeProduct.priceString ??
+                              'Price unavailable',
                     style: ThemeData.light().textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontSize: 30,
@@ -139,6 +282,11 @@ class UpgradeScreen extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () {
                       // Handle upgrade action
+                      _isLoadingOffer ||
+                              _lifetimePackage == null ||
+                              _isPurchasing
+                          ? null
+                          : _purchasePro;
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -151,15 +299,23 @@ class UpgradeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
-                    child: Text(
-                      'Unlock Pro',
-                      style: ThemeData.light().textTheme.bodyMedium?.copyWith(
-                        color: brandPurple,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isPurchasing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            'Unlock Pro',
+                            style: ThemeData.light().textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: brandPurple,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
                   ),
+
                   const SizedBox(height: 10),
                   Text(
                     'No subscription. The price rises with each major update, but if you buy now you never pay again for Pro.',
@@ -171,13 +327,15 @@ class UpgradeScreen extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(10),
-                    child: Text(
-                      'Restore purchase',
-                      style: ThemeData.light().textTheme.bodySmall?.copyWith(
-                        color: cardColor,
-                        fontSize: 12,
+                    child: TextButton(
+                      onPressed: _isPurchasing ? null : _restorePurchase,
+                      child: Text(
+                        'Restore purchase',
+                        style: ThemeData.light().textTheme.bodySmall?.copyWith(
+                          color: cardColor,
+                          fontSize: 12,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                 ],
